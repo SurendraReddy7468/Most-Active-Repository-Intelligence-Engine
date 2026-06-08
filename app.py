@@ -145,11 +145,15 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Stars vs Forks")
+    # Filter to repos with at least some activity
+    scatter_df = repo_df[(repo_df["stars"] > 0) | (repo_df["forks"] > 0)]
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.scatter(repo_df["stars"], repo_df["forks"], alpha=0.6, color="coral", s=50)
+    ax.scatter(scatter_df["stars"], scatter_df["forks"], alpha=0.6, color="coral", s=60)
     ax.set_xlabel("Stars (WatchEvents)")
     ax.set_ylabel("Forks")
     ax.set_title("Stars vs Forks per Repository")
+    ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
