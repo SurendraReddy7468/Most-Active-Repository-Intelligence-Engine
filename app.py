@@ -5,8 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 import gzip
-import urllib.request
-import shutil
 import os
 
 # ─── Page Setup ───────────────────────────
@@ -20,21 +18,13 @@ st.title("🔥 Most Active Repository Intelligence Engine")
 st.markdown("**Dataset:** GitHub Archive | **Stack:** Polars · Pandas · NumPy · Matplotlib")
 st.markdown("---")
 
-# ─── Download & Load Data ─────────────────
+# ─── Load Data ────────────────────────────
 @st.cache_data
 def load_data():
-    # Download data if not already present
-    if not os.path.exists("gharchive.json"):
-        st.info("Downloading GitHub Archive data...")
-        url = "https://data.gharchive.org/2025-06-05-14.json.gz"
-        urllib.request.urlretrieve(url, "sample.json.gz")
-        with gzip.open("sample.json.gz", "rb") as f_in:
-            with open("gharchive.json", "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-
-    # Load into Polars
     rows = []
-    with open("gharchive.json") as f:
+
+    # Read directly from the gz file in the repo
+    with gzip.open("2025-06-05-14.json.gz", "rt", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -92,10 +82,9 @@ def compute_scores(_df):
     repo_df["score"] = np.round(score, 2)
     repo_df = repo_df.sort_values("score", ascending=False).reset_index(drop=True)
     repo_df.index += 1
-
     return repo_df
 
-# ─── Load Data ────────────────────────────
+# ─── Load ─────────────────────────────────
 with st.spinner("Loading GitHub Archive data..."):
     df = load_data()
     repo_df = compute_scores(df)
@@ -103,32 +92,27 @@ with st.spinner("Loading GitHub Archive data..."):
 # ─── Metric Cards ─────────────────────────
 st.subheader("📊 Dataset Overview")
 col1, col2, col3, col4 = st.columns(4)
-
-col1.metric("Total Events",       f"{len(df):,}")
-col2.metric("Unique Repos",       f"{df['repo_name'].n_unique():,}")
-col3.metric("Unique Users",       f"{df['actor'].n_unique():,}")
-col4.metric("Event Types",        f"{df['event_type'].n_unique()}")
-
+col1.metric("Total Events",  f"{len(df):,}")
+col2.metric("Unique Repos",  f"{df['repo_name'].n_unique():,}")
+col3.metric("Unique Users",  f"{df['actor'].n_unique():,}")
+col4.metric("Event Types",   f"{df['event_type'].n_unique()}")
 st.markdown("---")
 
-# ─── Top N Slider ─────────────────────────
+# ─── Slider + Table ───────────────────────
 st.subheader("🏆 Most Active Repositories")
-top_n = st.slider("How many top repos to show?", 5, 30, 10)
+top_n  = st.slider("How many top repos to show?", 5, 30, 10)
 top_df = repo_df.head(top_n)
-
-# Show table
 st.dataframe(
     top_df[["repo_name","score","total_events","unique_contributors","stars","forks","pull_requests"]],
     use_container_width=True
 )
-
 st.markdown("---")
 
 # ─── Charts Row 1 ─────────────────────────
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📊 Top Repos by Score")
+    st.subheader("Top Repos by Score")
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.barh(top_df["repo_name"][::-1], top_df["score"][::-1], color="steelblue")
     ax.set_xlabel("Composite Score")
@@ -138,7 +122,7 @@ with col1:
     plt.close()
 
 with col2:
-    st.subheader("🗂 Event Types Distribution")
+    st.subheader("Event Types Distribution")
     event_counts = df.group_by("event_type").len().to_pandas()
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.pie(
@@ -154,7 +138,7 @@ with col2:
 
 st.markdown("---")
 
-# ─── Chart Row 2 ──────────────────────────
+# ─── Charts Row 2 ─────────────────────────
 col1, col2 = st.columns(2)
 
 with col1:
@@ -212,6 +196,5 @@ st.download_button(
     mime="text/csv"
 )
 
-# ─── Footer ───────────────────────────────
 st.markdown("---")
 st.markdown("**Project:** Most Active Repository Intelligence Engine | **Dataset:** GH Archive | **Stack:** Polars · Pandas · NumPy · Matplotlib")
