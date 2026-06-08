@@ -122,14 +122,18 @@ with col1:
 with col2:
     st.subheader("Event Types Distribution")
     event_counts = df.group_by("event_type").len().to_pandas()
-    fig, ax = plt.subplots(figsize=(8, 5))
+    event_counts = event_counts.sort_values("len", ascending=False)
+
+    fig, ax = plt.subplots(figsize=(10, 8))
     ax.pie(
         event_counts["len"],
         labels=event_counts["event_type"],
         autopct="%1.1f%%",
-        startangle=140
+        startangle=90,
+        pctdistance=0.75,
+        labeldistance=1.15
     )
-    ax.set_title("GitHub Event Types")
+    ax.set_title("GitHub Event Types", fontsize=14, pad=20)
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
