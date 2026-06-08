@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import gzip
 import os
 
 # ─── Page Setup ───────────────────────────
@@ -23,8 +22,7 @@ st.markdown("---")
 def load_data():
     rows = []
 
-    # Read directly from the gz file in the repo
-    with gzip.open("2025-06-05-14.json.gz", "rt", encoding="utf-8") as f:
+    with open("gharchive_small.json", "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
